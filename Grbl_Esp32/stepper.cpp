@@ -7,7 +7,7 @@
   Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
   Copyright (c) 2009-2011 Simen Svale Skogsrud
 	
-	2018 -	Bart Dring This file was modifed for use on the ESP32
+	2018 -	Bart Dring This file was modified for use on the ESP32
 					CPU. Do not use this with Grbl for atMega328P
 
   Grbl is free software: you can redistribute it and/or modify
@@ -215,11 +215,13 @@ void IRAM_ATTR onStepperDriverTimer(void *para)  // ISR It is time to take a ste
 	 // Set the direction pins a couple of nanoseconds before we step the steppers  
   set_direction_pins_on(st.dir_outbits);
 	// TO DO ... do we need a direction change delay?		
+
+
+		
 	
-	
-	set_stepper_pins_on(st.step_outbits);
-	step_pulse_off_time = esp_timer_get_time() + (settings.pulse_microseconds); // determine when to turn off pulse
-	
+	//set_stepper_pins_on(st.step_outbits);
+	//step_pulse_off_time = esp_timer_get_time() + (settings.pulse_microseconds); // determine when to turn off pulse
+	stepperSetStepOutputs();
 	
 	 
   busy = true;
@@ -325,11 +327,14 @@ void IRAM_ATTR onStepperDriverTimer(void *para)  // ISR It is time to take a ste
 	
 	
 	// wait for step pulse time to complete...some of it should have expired during code above
+	/*
 	while (esp_timer_get_time() < step_pulse_off_time)
 	{
 		NOP(); // spin here until time to turn off step
 	}
 	set_stepper_pins_on(0); // turn all off
+	*/
+	
 	
 	TIMERG0.hw_timer[STEP_TIMER_INDEX].config.alarm_en = TIMER_ALARM_EN;
 	
@@ -350,6 +355,8 @@ void stepper_init()
 	#ifdef Z_DIRECTION_PIN
 		pinMode(Z_DIRECTION_PIN, OUTPUT);
 	#endif
+	
+	/*
 	
 	// make the step pins outputs	
 	#ifdef  X_STEP_PIN
@@ -373,22 +380,16 @@ void stepper_init()
 		pinMode(Z_STEP_B_PIN, OUTPUT);
 	#endif
 	
+	*/
+	
+	//initRMT();
+	
 	// make the stepper disable pin an output
 	#ifdef STEPPERS_DISABLE_PIN
 		pinMode(STEPPERS_DISABLE_PIN, OUTPUT);
 		set_stepper_disable(true);
 	#endif
 
- // setup stepper timer interrupt
- 
- /*
- stepperDriverTimer = timerBegin(	0, 													// timer number
-																	F_TIMERS / F_STEPPER_TIMER, // prescaler
-																	true 												// auto reload
-																	);
- // attach the interrupt
- timerAttachInterrupt(stepperDriverTimer, &onStepperDriverTimer, true);  
- */
  
 	timer_config_t config;
 	config.divider     = F_TIMERS / F_STEPPER_TIMER;
@@ -406,6 +407,57 @@ void stepper_init()
  
 }
 
+
+void initRMT ()
+{
+	rmt_item32_t rmtItem[2];
+
+  rmt_config_t rmtConfig; //  = {
+			rmtConfig.rmt_mode = RMT_MODE_TX;
+			rmtConfig.clk_div = 20;
+			rmtConfig.mem_block_num = 2;
+			rmtConfig.tx_config.loop_en = false;
+			rmtConfig.tx_config.carrier_en = false;
+			rmtConfig.tx_config.carrier_freq_hz = 0;
+			rmtConfig.tx_config.carrier_duty_percent = 50;
+			rmtConfig.tx_config.carrier_level = RMT_CARRIER_LEVEL_LOW;
+			rmtConfig.tx_config.idle_output_en = true;
+
+		#ifdef STEP_PULSE_DELAY
+			rmtItem[0].duration0 = STEP_PULSE_DELAY * 4; 
+		#else
+			rmtItem[0].duration0 = 1;
+		#endif	
+    rmtItem[0].duration1 = 4 * settings.pulse_microseconds;
+    rmtItem[1].duration0 = 0;
+    rmtItem[1].duration1 = 0;
+
+    uint32_t channel;
+    for(channel = 0; channel < N_AXIS; channel++) {
+
+    	rmtConfig.channel = (rmt_channel_t)channel;
+
+    	switch(channel) {
+			case 0:
+				rmtConfig.tx_config.idle_level = bit_istrue(settings.step_invert_mask, X_AXIS) ? RMT_IDLE_LEVEL_HIGH : RMT_IDLE_LEVEL_LOW;
+				rmtConfig.gpio_num = X_STEP_PIN;
+				break;
+			case 1:
+				rmtConfig.tx_config.idle_level = bit_istrue(settings.step_invert_mask, Y_AXIS) ? RMT_IDLE_LEVEL_HIGH : RMT_IDLE_LEVEL_LOW;
+				rmtConfig.gpio_num = Y_STEP_PIN;
+				break;
+			case 2:
+				rmtConfig.tx_config.idle_level = bit_istrue(settings.step_invert_mask, Z_AXIS) ? RMT_IDLE_LEVEL_HIGH : RMT_IDLE_LEVEL_LOW;
+				rmtConfig.gpio_num = Z_STEP_PIN;
+				break;
+    	}
+    	rmtItem[0].level0 = rmtConfig.tx_config.idle_level;
+    	rmtItem[0].level1 = !rmtConfig.tx_config.idle_level;
+        rmt_config(&rmtConfig);
+        rmt_fill_tx_items(rmtConfig.channel, &rmtItem[0], rmtConfig.mem_block_num, 0);
+    }
+}
+
 // enabled. Startup init and limits call this function but shouldn't start the cycle.
 void st_wake_up()
 {
@@ -418,7 +470,6 @@ void st_wake_up()
   set_stepper_disable(false);
 	
 	stepper_idle = false;
-	
   
 
   // Initialize stepper output bits to ensure first ISR call does not step.
@@ -469,6 +520,8 @@ void st_reset()
 
 void set_direction_pins_on(uint8_t onMask)
 {  
+	grbl_send(CLIENT_SERIAL, ".");
+
 	// inverts are applied in step generation
 	#ifdef X_DIRECTION_PIN
 		digitalWrite(X_DIRECTION_PIN, (onMask & (1<<X_AXIS)));
@@ -536,7 +589,26 @@ void set_direction_pins_on(uint8_t onMask)
 }
 #endif
 
+// Set stepper pulse output pins
+inline IRAM_ATTR static void stepperSetStepOutputs ()
+{
+	
+	
+    if(st.step_outbits & (1<<X_AXIS)) {
+        RMT.conf_ch[0].conf1.mem_rd_rst = 1;
+        RMT.conf_ch[0].conf1.tx_start = 1;
+    }
 
+    if(st.step_outbits & (1<<Y_AXIS)) {
+        RMT.conf_ch[1].conf1.mem_rd_rst = 1;
+        RMT.conf_ch[1].conf1.tx_start = 1;
+    }
+
+    if(st.step_outbits & (1<<Z_AXIS)) {
+        RMT.conf_ch[2].conf1.mem_rd_rst = 1;
+        RMT.conf_ch[2].conf1.tx_start = 1;
+    }
+}
 
 
 // Stepper shutdown
@@ -566,7 +638,7 @@ void st_go_idle()
 		set_stepper_disable(pin_state);
 	}	
   
-	set_stepper_pins_on(0);
+	//set_stepper_pins_on(0);
 }
 
  // Called by planner_recalculate() when the executing block is updated by the new plan.

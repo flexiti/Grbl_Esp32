@@ -78,6 +78,9 @@ extern bool stepper_idle;
 
 extern uint8_t ganged_mode;
 
+inline IRAM_ATTR static void stepperSetStepOutputs ();
+void initRMT ();
+
 // -- Task handles for use in the notifications
 void IRAM_ATTR onSteppertimer();
 void IRAM_ATTR onStepperOffTimer();
