@@ -382,7 +382,7 @@ void stepper_init()
 	
 	*/
 	
-	//initRMT();
+	initRMT();
 	
 	// make the stepper disable pin an output
 	#ifdef STEPPERS_DISABLE_PIN
@@ -520,8 +520,6 @@ void st_reset()
 
 void set_direction_pins_on(uint8_t onMask)
 {  
-	grbl_send(CLIENT_SERIAL, ".");
-
 	// inverts are applied in step generation
 	#ifdef X_DIRECTION_PIN
 		digitalWrite(X_DIRECTION_PIN, (onMask & (1<<X_AXIS)));
