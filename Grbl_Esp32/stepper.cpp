@@ -322,19 +322,6 @@ void IRAM_ATTR onStepperDriverTimer(void *para)  // ISR It is time to take a ste
     st.exec_segment = NULL;
     if ( ++segment_buffer_tail == SEGMENT_BUFFER_SIZE) { segment_buffer_tail = 0; }
   }
-
-  st.step_outbits ^= step_port_invert_mask;  // Apply step port invert mask
-	
-	
-	// wait for step pulse time to complete...some of it should have expired during code above
-	/*
-	while (esp_timer_get_time() < step_pulse_off_time)
-	{
-		NOP(); // spin here until time to turn off step
-	}
-	set_stepper_pins_on(0); // turn all off
-	*/
-	
 	
 	TIMERG0.hw_timer[STEP_TIMER_INDEX].config.alarm_en = TIMER_ALARM_EN;
 	
@@ -434,27 +421,35 @@ void initRMT ()
 
     uint32_t channel;
     for(channel = 0; channel < N_AXIS; channel++) {
-
+			
+			rmt_set_source_clk( (rmt_channel_t)channel, RMT_BASECLK_APB);
     	rmtConfig.channel = (rmt_channel_t)channel;
 
     	switch(channel) {
 			case 0:
-				rmtConfig.tx_config.idle_level = bit_istrue(settings.step_invert_mask, X_AXIS) ? RMT_IDLE_LEVEL_HIGH : RMT_IDLE_LEVEL_LOW;
-				rmtConfig.gpio_num = X_STEP_PIN;
+				#ifdef  X_STEP_PIN				
+					rmtConfig.tx_config.idle_level = bit_istrue(settings.step_invert_mask, X_AXIS) ? RMT_IDLE_LEVEL_HIGH : RMT_IDLE_LEVEL_LOW;
+					rmtConfig.gpio_num = X_STEP_PIN;
+				#endif
 				break;
 			case 1:
-				rmtConfig.tx_config.idle_level = bit_istrue(settings.step_invert_mask, Y_AXIS) ? RMT_IDLE_LEVEL_HIGH : RMT_IDLE_LEVEL_LOW;
-				rmtConfig.gpio_num = Y_STEP_PIN;
+				#ifdef  Y_STEP_PIN
+					rmtConfig.tx_config.idle_level = bit_istrue(settings.step_invert_mask, Y_AXIS) ? RMT_IDLE_LEVEL_HIGH : RMT_IDLE_LEVEL_LOW;
+					rmtConfig.gpio_num = Y_STEP_PIN;
+				#endif
 				break;
 			case 2:
-				rmtConfig.tx_config.idle_level = bit_istrue(settings.step_invert_mask, Z_AXIS) ? RMT_IDLE_LEVEL_HIGH : RMT_IDLE_LEVEL_LOW;
-				rmtConfig.gpio_num = Z_STEP_PIN;
+				#ifdef  Z_STEP_PIN
+					rmtConfig.tx_config.idle_level = bit_istrue(settings.step_invert_mask, Z_AXIS) ? RMT_IDLE_LEVEL_HIGH : RMT_IDLE_LEVEL_LOW;
+					rmtConfig.gpio_num = Z_STEP_PIN;
+				#endif
 				break;
     	}
+			
     	rmtItem[0].level0 = rmtConfig.tx_config.idle_level;
     	rmtItem[0].level1 = !rmtConfig.tx_config.idle_level;
-        rmt_config(&rmtConfig);
-        rmt_fill_tx_items(rmtConfig.channel, &rmtItem[0], rmtConfig.mem_block_num, 0);
+      rmt_config(&rmtConfig);
+      rmt_fill_tx_items(rmtConfig.channel, &rmtItem[0], rmtConfig.mem_block_num, 0);
     }
 }
 
@@ -591,21 +586,26 @@ void set_direction_pins_on(uint8_t onMask)
 inline IRAM_ATTR static void stepperSetStepOutputs ()
 {
 	
-	
-    if(st.step_outbits & (1<<X_AXIS)) {
-        RMT.conf_ch[0].conf1.mem_rd_rst = 1;
-        RMT.conf_ch[0].conf1.tx_start = 1;
-    }
+		#ifdef  X_STEP_PIN
+			if(st.step_outbits & (1<<X_AXIS)) {
+					RMT.conf_ch[0].conf1.mem_rd_rst = 1;
+					RMT.conf_ch[0].conf1.tx_start = 1;
+			}
+		#endif
 
-    if(st.step_outbits & (1<<Y_AXIS)) {
-        RMT.conf_ch[1].conf1.mem_rd_rst = 1;
-        RMT.conf_ch[1].conf1.tx_start = 1;
-    }
-
-    if(st.step_outbits & (1<<Z_AXIS)) {
-        RMT.conf_ch[2].conf1.mem_rd_rst = 1;
-        RMT.conf_ch[2].conf1.tx_start = 1;
-    }
+		#ifdef  Y_STEP_PIN
+			if(st.step_outbits & (1<<Y_AXIS)) {
+					RMT.conf_ch[1].conf1.mem_rd_rst = 1;
+					RMT.conf_ch[1].conf1.tx_start = 1;
+			}
+		#endif
+		
+		#ifdef  Z_STEP_PIN
+			if(st.step_outbits & (1<<Z_AXIS)) {
+					RMT.conf_ch[2].conf1.mem_rd_rst = 1;
+					RMT.conf_ch[2].conf1.tx_start = 1;
+			}
+		#endif
 }
 
 
