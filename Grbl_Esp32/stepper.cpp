@@ -339,6 +339,10 @@ void IRAM_ATTR onStepperDriverTimer(void *para)  // ISR It is time to take a ste
 
 void stepper_init()
 {	
+
+	#ifdef USE_TMC2130
+		TMC2130_Init();
+	#endif
   	
 	// make the direction pins outputs
 	#ifdef X_DIRECTION_PIN
