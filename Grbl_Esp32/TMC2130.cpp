@@ -27,12 +27,8 @@ void TMC2130_Init()
 			TMC2130Stepper TMC2130_X = TMC2130Stepper(X_CS_PIN);
 			TMC2130_X.begin(); // Initiate pins and registries
 			TMC2130_X.microsteps(32);
-			TMC2130_X.SilentStepStick2130(600); // Set stepper current to 600mA
-			TMC2130_X.stealthChop(1); // Enable extremely quiet stepping
-			TMC2130_X.irun(31); // 100% = 31
-			TMC2130_X.ihold(0); // 100% = 31
-			TMC2130_X.TPOWERDOWN(1);
-			TMC2130_X.iholddelay(1); // hold delay approx 1 sec  = val/4
+			TMC2130_X.setCurrent(200, 0.11, 0.5);
+			TMC2130_X.stealthChop(1); // Enable extremely quiet stepping			
 		#endif
 		
 	
@@ -41,12 +37,8 @@ void TMC2130_Init()
 			TMC2130Stepper TMC2130_Y = TMC2130Stepper(Y_CS_PIN);
 			TMC2130_Y.begin(); // Initiate pins and registries
 			TMC2130_Y.microsteps(32);
-			TMC2130_Y.SilentStepStick2130(600); // Set stepper current to 600mA
+			TMC2130_Y.setCurrent(200, 0.11, 0.5);
 			TMC2130_Y.stealthChop(1); // Enable extremely quiet stepping
-			TMC2130_Y.irun(31); // 100% = 31
-			TMC2130_Y.ihold(0); // 100% = 31
-			TMC2130_Y.TPOWERDOWN(1);
-			TMC2130_Y.iholddelay(1); // hold delay approx 1 sec  = val/4
 		#endif
 		
 		#ifdef Z_CS_PIN
