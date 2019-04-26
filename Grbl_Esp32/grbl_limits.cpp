@@ -27,7 +27,7 @@
 
 #include "grbl.h"
 
-
+xQueueHandle limit_sw_queue;
 
 // Homing axis search distance multiplier. Computed by this value times the cycle travel.
 #ifndef HOMING_AXIS_SEARCH_SCALAR
@@ -39,25 +39,32 @@
 
 void IRAM_ATTR isr_limit_switches()
 {
-	 // Ignore limit switches if already in an alarm state or in-process of executing an alarm.
+	// Ignore limit switches if already in an alarm state or in-process of executing an alarm.
     // When in the alarm state, Grbl should have been reset or will force a reset, so any pending
     // moves in the planner and serial buffers are all cleared and newly sent blocks will be
     // locked out until a homing cycle or a kill lock command. Allows the user to disable the hard
     // limit setting if their limits are constantly triggering after a reset and move their axes.
 
-		if (  ( sys.state != STATE_ALARM) & (bit_isfalse(sys.state, STATE_HOMING)) ) {
-      if (!(sys_rt_exec_alarm)) {
-        #ifdef HARD_LIMIT_FORCE_STATE_CHECK
-          // Check limit pin state.
-          if (limits_get_state()) {
-            mc_reset(); // Initiate system kill.
-            system_set_exec_alarm(EXEC_ALARM_HARD_LIMIT); // Indicate hard limit critical event
-          }
-        #else
-          mc_reset(); // Initiate system kill.
-          system_set_exec_alarm(EXEC_ALARM_HARD_LIMIT); // Indicate hard limit critical event
-        #endif
-      }			
+	if (  ( sys.state != STATE_ALARM) & (bit_isfalse(sys.state, STATE_HOMING)) ) {
+		if (!(sys_rt_exec_alarm)) {
+			
+			#ifdef ENABLE_SOFTWARE_DEBOUNCE
+				// we will start a task that will recheck the switches after a small delay
+				int evt;
+				xQueueSendFromISR(limit_sw_queue, &evt, NULL);	
+			#else
+				#ifdef HARD_LIMIT_FORCE_STATE_CHECK
+				  // Check limit pin state.
+				  if (limits_get_state()) {
+					mc_reset(); // Initiate system kill.
+					system_set_exec_alarm(EXEC_ALARM_HARD_LIMIT); // Indicate hard limit critical event
+				  }
+				#else
+				  mc_reset(); // Initiate system kill.
+				  system_set_exec_alarm(EXEC_ALARM_HARD_LIMIT); // Indicate hard limit critical event
+				#endif				
+			#endif
+		}						
     }
 }
 
@@ -303,12 +310,25 @@ void limits_init()
 
 // TODO Debounce
 /*
-  #ifdef ENABLE_SOFTWARE_DEBOUNCE
-    MCUSR &= ~(1<<WDRF);
-    WDTCSR |= (1<<WDCE) | (1<<WDE);
-    WDTCSR = (1<<WDP0); // Set time-out at ~32msec.
-  #endif
- */ 
+	xTaskCreatePinnedToCore(	limitCheckTask,    // task
+								"limitCheckTask", // name for task
+								2048,   // size of task stack
+								NULL,   // parameters
+								1, // priority
+								&limitCheckTaskHandle,
+								0 // core
+								);
+	*/							
+	limit_sw_queue = xQueueCreate(10, sizeof( int ));
+	
+	xTaskCreate(limitCheckTask, 
+				"limitCheckTask", 
+				2048, 
+				NULL, 
+				5, // priority 
+				NULL);
+								
+								
 }
 
 
@@ -388,6 +408,22 @@ void limits_soft_check(float *target)
     protocol_execute_realtime(); // Execute to enter critical event loop and system abort
     return;
   }
+}
+
+// this is the task
+void limitCheckTask(void *pvParameters)
+{	
+	while(true) {
+		int evt;
+		xQueueReceive(limit_sw_queue, &evt, portMAX_DELAY); // block until receive queue
+		vTaskDelay( DEBOUNCE_PERIOD / portTICK_PERIOD_MS ); // delay a while
+		
+		if (limits_get_state()) {
+			mc_reset(); // Initiate system kill.
+			system_set_exec_alarm(EXEC_ALARM_HARD_LIMIT); // Indicate hard limit critical event
+			grbl_send(CLIENT_SERIAL, "[MSG: Limit]\r\n");
+		}		
+	}
 }
 
 // return true if the axis is defined as a squared axis

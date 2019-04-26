@@ -433,6 +433,11 @@ void stepper_init()
 
 void initRMT()
 {
+	// Each item has two durations and a level associated with each duration
+	// In a typical pulse we want low high then back to low
+	// Since that is three states, we need 2 items.
+	// The durations are 
+	// STEP_PULSE_DELAY, settings.pulse_microseconds, and the last 2 can be zero (don't care)
 	rmt_item32_t rmtItem[2];
 
 	rmt_config_t rmtConfig;

@@ -53,4 +53,6 @@ void isr_limit_switches();
 
 bool axis_is_squared(uint8_t axis_mask);
 
+void limitCheckTask(void *pvParameters);
+
 #endif
