@@ -309,16 +309,7 @@ void limits_init()
   
 
 // TODO Debounce
-/*
-	xTaskCreatePinnedToCore(	limitCheckTask,    // task
-								"limitCheckTask", // name for task
-								2048,   // size of task stack
-								NULL,   // parameters
-								1, // priority
-								&limitCheckTaskHandle,
-								0 // core
-								);
-	*/							
+							
 	limit_sw_queue = xQueueCreate(10, sizeof( int ));
 	
 	xTaskCreate(limitCheckTask, 

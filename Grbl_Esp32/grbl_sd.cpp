@@ -134,7 +134,9 @@ boolean readFileLine(char *line)
       }
     } else if (c == '\n') { // found the newline, so mark the end and return true
       line[index] = '\0';
-      return true;
+	  
+		
+		return true;
     } else { // add characters to the line
       if (!line_flags) {
         c = toupper(c); // make upper case
@@ -149,7 +151,7 @@ boolean readFileLine(char *line)
       return false;
     }
   }
-  // some files end without a newline
+   // some files end without a newline
   if (index !=0) {
     line[index] = '\0';
     return true;

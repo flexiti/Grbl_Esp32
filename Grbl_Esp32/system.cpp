@@ -21,6 +21,8 @@
 #include "grbl.h"
 #include "config.h"
 
+uint8_t control_button_macro = 0;
+
 void system_ini() // Renamed from system_init() due to conflict with esp32 files
 {	
 	// setup control inputs
@@ -42,36 +44,81 @@ void system_ini() // Renamed from system_init() due to conflict with esp32 files
 		pinMode(CONTROL_CYCLE_START_PIN, INPUT);
 		attachInterrupt(digitalPinToInterrupt(CONTROL_CYCLE_START_PIN), isr_control_inputs, CHANGE);
 	#endif
+	
+	#ifdef MACRO_BUTTON_0_PIN
+		pinMode(MACRO_BUTTON_0_PIN, INPUT);
+		attachInterrupt(digitalPinToInterrupt(MACRO_BUTTON_0_PIN), isr_control_inputs, CHANGE);
+	#endif
+	
+	#ifdef MACRO_BUTTON_1_PIN
+		pinMode(MACRO_BUTTON_1_PIN, INPUT);
+		attachInterrupt(digitalPinToInterrupt(MACRO_BUTTON_1_PIN), isr_control_inputs, CHANGE);
+	#endif
+	
+	#ifdef MACRO_BUTTON_2_PIN
+		pinMode(MACRO_BUTTON_2_PIN, INPUT);
+		attachInterrupt(digitalPinToInterrupt(MACRO_BUTTON_2_PIN), isr_control_inputs, CHANGE);
+	#endif
+	
+	#ifdef MACRO_BUTTON_3_PIN
+		pinMode(MACRO_BUTTON_3_PIN, INPUT);
+		attachInterrupt(digitalPinToInterrupt(MACRO_BUTTON_3_PIN), isr_control_inputs, CHANGE);
+	#endif
+	
+	
 
 #endif
 }
 
+
+
 void IRAM_ATTR isr_control_inputs()
-{
+{	
 	
-	uint8_t pin = system_control_get_state();
-  if (pin) {
-    if (bit_istrue(pin,CONTROL_PIN_INDEX_RESET)) 
-		{
-			grbl_send(CLIENT_SERIAL, "[MSG:Reset via control pin]\r\n"); // help debug reason for reset
-      mc_reset();
-    } 
-		else if (bit_istrue(pin,CONTROL_PIN_INDEX_CYCLE_START)) 
-		{
-      bit_true(sys_rt_exec_state, EXEC_CYCLE_START);
-    
-    } 		
-		else if (bit_istrue(pin,CONTROL_PIN_INDEX_FEED_HOLD)) 
-		{
-        bit_true(sys_rt_exec_state, EXEC_FEED_HOLD);
-    
-    }		
-		else if (bit_istrue(pin,CONTROL_PIN_INDEX_SAFETY_DOOR)) 
-		{
-        bit_true(sys_rt_exec_state, EXEC_SAFETY_DOOR);
-    
-    }		
-  }  
+	
+	static uint64_t debounce_time = esp_timer_get_time() + 2000000;  // no interrupts for a while after startup.
+	
+	if (esp_timer_get_time() > debounce_time)
+	{	
+		uint8_t pin = system_control_get_state();
+		if (pin) {
+			if (bit_istrue(pin,CONTROL_PIN_INDEX_RESET)) 
+			{
+				grbl_send(CLIENT_SERIAL, "[MSG:Reset via control pin]\r\n"); // help debug reason for reset
+				mc_reset();
+			} 
+			else if (bit_istrue(pin,CONTROL_PIN_INDEX_CYCLE_START)) {
+				bit_true(sys_rt_exec_state, EXEC_CYCLE_START);    
+			} 		
+			else if (bit_istrue(pin,CONTROL_PIN_INDEX_FEED_HOLD)) {
+				bit_true(sys_rt_exec_state, EXEC_FEED_HOLD);    
+			}		
+			else if (bit_istrue(pin,CONTROL_PIN_INDEX_SAFETY_DOOR)) {
+				bit_true(sys_rt_exec_state, EXEC_SAFETY_DOOR);    
+			}
+			
+			else if (bit_istrue(pin,CONTROL_PIN_INDEX_MACRO_0)) {
+				//control_button_macro = CONTROL_PIN_INDEX_MACRO_0;
+				//debounce_time += 500000; // ignore interrupts a while
+				Serial2Socket.push("[ESP220]/home.nc\r");
+			}
+			
+			else if (bit_istrue(pin,CONTROL_PIN_INDEX_MACRO_1)) {
+			}
+			
+			else if (bit_istrue(pin,CONTROL_PIN_INDEX_MACRO_2)) {
+			}
+			
+			else if (bit_istrue(pin,CONTROL_PIN_INDEX_MACRO_3)) {
+			}			
+		} 	
+		debounce_time += 50000;  // general debouncing
+	}
+	else
+	{
+		//grbl_send(CLIENT_SERIAL, "[MSG:int rej]\r\n");
+	}
+	
 }
 
 // Executes user startup script, if stored.
@@ -400,27 +447,52 @@ uint8_t system_control_get_state()
 		return 0;
 	#endif	
 	
-  uint8_t control_state = 0;
+	uint8_t control_state = 0;
+	
 	#ifdef CONTROL_SAFETY_DOOR_PIN
 		defined_pin_mask |= CONTROL_PIN_INDEX_SAFETY_DOOR;
 		if (digitalRead(CONTROL_SAFETY_DOOR_PIN)) { control_state |= CONTROL_PIN_INDEX_SAFETY_DOOR; }
 	#endif
+	
 	#ifdef CONTROL_RESET_PIN
 		defined_pin_mask |= CONTROL_PIN_INDEX_RESET;
 		if (digitalRead(CONTROL_RESET_PIN)) { control_state |= CONTROL_PIN_INDEX_RESET; }
 	#endif
+	
 	#ifdef CONTROL_FEED_HOLD_PIN
 		defined_pin_mask |= CONTROL_PIN_INDEX_FEED_HOLD;
 		if (digitalRead(CONTROL_FEED_HOLD_PIN)) { control_state |= CONTROL_PIN_INDEX_FEED_HOLD; }	
 	#endif
+	
 	#ifdef CONTROL_CYCLE_START_PIN
 		defined_pin_mask |= CONTROL_PIN_INDEX_CYCLE_START;
 		if (digitalRead(CONTROL_CYCLE_START_PIN)) { control_state |= CONTROL_PIN_INDEX_CYCLE_START; }   
 	#endif
 	
-  #ifdef INVERT_CONTROL_PIN_MASK
-    control_state ^= (INVERT_CONTROL_PIN_MASK & defined_pin_mask);
-  #endif  
+	#ifdef MACRO_BUTTON_0_PIN
+		defined_pin_mask |= CONTROL_PIN_INDEX_MACRO_0;
+		if (digitalRead(MACRO_BUTTON_0_PIN)) { control_state |= CONTROL_PIN_INDEX_MACRO_0; }
+	#endif
+	
+	#ifdef MACRO_BUTTON_1_PIN
+		defined_pin_mask |= CONTROL_PIN_INDEX_MACRO_1;
+		if (digitalRead(MACRO_BUTTON_1_PIN)) { control_state |= CONTROL_PIN_INDEX_MACRO_1; }
+	#endif
+	
+	#ifdef MACRO_BUTTON_2_PIN
+		defined_pin_mask |= CONTROL_PIN_INDEX_MACRO_2;
+		if (digitalRead(MACRO_BUTTON_2_PIN)) { control_state |= CONTROL_PIN_INDEX_MACRO_2; }
+	#endif
+	
+	#ifdef MACRO_BUTTON_3_PIN
+		defined_pin_mask |= CONTROL_PIN_INDEX_MACRO_3;
+		if (digitalRead(MACRO_BUTTON_3_PIN)) { control_state |= CONTROL_PIN_INDEX_MACRO_3; }
+	#endif
+	
+	
+	#ifdef INVERT_CONTROL_PIN_MASK
+		control_state ^= (INVERT_CONTROL_PIN_MASK & defined_pin_mask);
+	#endif  
 	  
   return(control_state);  
 }

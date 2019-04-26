@@ -47,7 +47,7 @@ typedef struct {
 } system_t;
 extern system_t sys;
 
-
+extern uint8_t control_button_macro;
 
 
 // Define system executor bit map. Used internally by realtime protocol as realtime command flags,
@@ -134,6 +134,11 @@ extern system_t sys;
   #define CONTROL_PIN_INDEX_RESET         bit(1)
   #define CONTROL_PIN_INDEX_FEED_HOLD     bit(2)
   #define CONTROL_PIN_INDEX_CYCLE_START   bit(3)
+  #define CONTROL_PIN_INDEX_MACRO_0			  bit(4)
+  #define CONTROL_PIN_INDEX_MACRO_1			  bit(5)
+  #define CONTROL_PIN_INDEX_MACRO_2			  bit(6)
+  #define CONTROL_PIN_INDEX_MACRO_3			  bit(7)
+  
 //#else
   //#define N_CONTROL_PIN 3
   //#define CONTROL_PIN_INDEX_RESET         bit(0)

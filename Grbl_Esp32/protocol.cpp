@@ -89,8 +89,13 @@ void protocol_main_loop()
 			if (SD_ready_next) {
 				char fileLine[255];
 				if (readFileLine(fileLine)) {
-					SD_ready_next = false;
-					report_status_message(gc_execute_line(fileLine, SD_client), SD_client);
+					SD_ready_next = false;					
+					if (fileLine[0] == '$') { // $H special case						
+						report_status_message(system_execute_line(fileLine, CLIENT_SERIAL), SD_client);
+					}
+					else {	
+						report_status_message(gc_execute_line(fileLine, SD_client), SD_client);
+					}
 				}
 				else {
 					char temp[50];
@@ -101,7 +106,6 @@ void protocol_main_loop()
 				}
 			}
 		#endif
-	
 	
     // Process one line of incoming serial data, as the data becomes available. Performs an
     // initial filtering by removing spaces and comments and capitalizing all letters.
