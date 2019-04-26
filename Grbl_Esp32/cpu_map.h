@@ -204,17 +204,28 @@
 #endif
 
 #ifdef CPU_MAP_POLAR_COASTER  // The Buildlog.net pen polar coaster controller V1
-		#define X_STEP_PIN      GPIO_NUM_15
-		#define Y_STEP_PIN      GPIO_NUM_2
-		#define X_DIRECTION_PIN   GPIO_NUM_25
-		#define Y_DIRECTION_PIN   GPIO_NUM_26
+		#define X_STEP_PIN      		GPIO_NUM_15
+		#define Y_STEP_PIN      		GPIO_NUM_2
+		#define X_DIRECTION_PIN   		GPIO_NUM_25
+		#define Y_DIRECTION_PIN   		GPIO_NUM_26
 		
-		#define STEPPERS_DISABLE_PIN GPIO_NUM_17
+		#define STEPPERS_DISABLE_PIN 	GPIO_NUM_17
 		
-		#define X_LIMIT_PIN      	GPIO_NUM_4
-		#define LIMIT_MASK      	B1
+		#define X_LIMIT_PIN      		GPIO_NUM_4
+		#define LIMIT_MASK      		B1
 		
-		#define CONTROL_RESET_PIN         GPIO_NUM_13
+		#ifdef IGNORE_CONTROL_PINS // maybe set in config.h
+			#undef IGNORE_CONTROL_PINS
+		#endif
+		
+		
+		#define MACRO_BUTTON_0_PIN		GPIO_NUM_13
+		#define MACRO_BUTTON_1_PIN		GPIO_NUM_12
+		#define MACRO_BUTTON_2_PIN		GPIO_NUM_14
+		
+		//#define CONTROL_MASK      				B11111111  	// don't change
+		
+		
 		
 		// If SPINDLE_PWM_PIN is commented out, this frees up the pin, but Grbl will still
 		// use a virtual spindle. Do not comment out the other parameters for the spindle.
@@ -303,6 +314,43 @@
 		
 		
 		
+#endif
+
+// ================= common to all machines ================================
+	
+	// These are some ESP32 CPU Settings that the program needs, but are generally not changed
+		#define F_TIMERS	80000000    // a reference to the speed of ESP32 timers
+		#define F_STEPPER_TIMER 20000000  // frequency of step pulse timer
+		#define STEPPER_OFF_TIMER_PRESCALE 8 // gives a frequency of 10MHz
+		#define STEPPER_OFF_PERIOD_uSEC  3  // each tick is
+		
+		#define STEP_PULSE_MIN 2   // uSeconds
+		#define STEP_PULSE_MAX 10  // uSeconds
+		
+		// =============== Don't change or comment these out ======================
+		// They are for legacy purposes and will not affect your I/O 
+		
+		#define X_STEP_BIT    0  // don't change
+		#define Y_STEP_BIT    1  // don't change
+		#define Z_STEP_BIT    2  // don't change
+		#define STEP_MASK       B111 // don't change
+		
+		#define X_DIRECTION_BIT   0 // don't change
+		#define Y_DIRECTION_BIT   1  // don't change
+		#define Z_DIRECTION_BIT   2  // don't change
+		
+		#define X_LIMIT_BIT      	0  // don't change
+		#define Y_LIMIT_BIT      	1  // don't change
+		#define Z_LIMIT_BIT     	2  // don't change
+		
+		
+		#define PROBE_MASK        1 // don't change		
+		
+		#define CONTROL_MASK      				B1111  	// don't change
+		
+		// =======================================================================
+		
+
 #endif
 
 

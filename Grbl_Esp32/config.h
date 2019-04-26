@@ -46,13 +46,13 @@ Some features should not be changed. See notes below.
 // one configuration file by placing their specific defaults and pin map at the bottom of this file.
 // If doing so, simply comment out these two defines and see instructions below.
 #define DEFAULTS_GENERIC
-#define CPU_MAP_PEN_LASER
+#define CPU_MAP_POLAR_COASTER
 #define VERBOSE_HELP // adds addition help info, but could confuse some senders
 
 // Serial baud rate
 #define BAUD_RATE 115200
 
-#define ENABLE_BLUETOOTH // enable bluetooth ... turns of if $I= something
+//#define ENABLE_BLUETOOTH // enable bluetooth ... turns of if $I= something
 
 #define ENABLE_SD_CARD // enable use of SD Card to run jobs
 
@@ -69,7 +69,7 @@ Some features should not be changed. See notes below.
 #define ENABLE_SERIAL2SOCKET_OUT
 
 #define ENABLE_CAPTIVE_PORTAL
-#define ENABLE_AUTHENTICATION
+//#define ENABLE_AUTHENTICATION
 
 #define NAMESPACE "GRBL"
 #define ESP_RADIO_MODE "RADIO_MODE"
@@ -147,7 +147,7 @@ Some features should not be changed. See notes below.
 // If homing is enabled, homing init lock sets Grbl into an alarm state upon power up. This forces
 // the user to perform the homing cycle (or override the locks) before doing anything else. This is
 // mainly a safety feature to remind the user to home, since position is unknown to Grbl.
-#define HOMING_INIT_LOCK // Comment to disable
+//#define HOMING_INIT_LOCK // Comment to disable
 
 // Define the homing cycle patterns with bitmasks. The homing cycle first performs a search mode
 // to quickly engage the limit switches, followed by a slower locate mode, and finished by a short
@@ -276,7 +276,7 @@ Some features should not be changed. See notes below.
 // This allows control pins to be ignored.
 // Since these are typically used on the pins that don't have pullups, they will float and cause
 // problems if not externally pulled up. Ignoring will always return not activated when read.
-//#define IGNORE_CONTROL_PINS
+#define IGNORE_CONTROL_PINS
 
 
 
