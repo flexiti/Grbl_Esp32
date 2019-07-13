@@ -32,8 +32,6 @@
 
 */
 
-#define SOLENOID_PEN_PIN GPIO_NUM_16
-#define SOLENOID_CHANNEL_NUM 6
 #define SOLENOID_PWM_FREQ 5000
 #define SOLENOID_PWM_RES_BITS 8
 
@@ -46,7 +44,7 @@
 
 #ifndef solenoid_h
 #define solenoid_h
-static TaskHandle_t solenoidSyncTaskHandle = 0;
+
 void solenoid_init();
 void solenoid_disable();
 void solenoidSyncTask(void *pvParameters);

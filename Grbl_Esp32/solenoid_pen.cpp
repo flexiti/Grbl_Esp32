@@ -23,6 +23,8 @@
 
 #ifdef USE_PEN_SOLENOID
 
+static TaskHandle_t solenoidSyncTaskHandle = 0;
+
 // used to delay turn on
 bool solenoid_pen_enable; 
 uint16_t solenoide_hold_count;
@@ -66,11 +68,9 @@ void solenoidSyncTask(void *pvParameters)
 	TickType_t xLastWakeTime;
 	const TickType_t xSolenoidFrequency = SOLENOID_TIMER_INT_FREQ;  // in ticks (typically ms)
 	uint16_t solenoid_delay_counter = 0;
-	
+
+	xLastWakeTime = xTaskGetTickCount(); // Initialise the xLastWakeTime variable with the current time.
 	while(true) { // don't ever return from this or the task dies
-	    
-			vTaskDelayUntil(&xLastWakeTime, xSolenoidFrequency);
-			
 			if (!solenoid_pen_enable) {
 				solenoid_delay_counter++;				
 				solenoid_pen_enable = (solenoid_delay_counter > SOLENOID_TURNON_DELAY);
@@ -80,6 +80,7 @@ void solenoidSyncTask(void *pvParameters)
 					system_convert_array_steps_to_mpos(m_pos,current_position); // convert to millimeters				
 					calc_solenoid(m_pos[Z_AXIS]); // calculate kinematics and move the servos
 			}			
+			vTaskDelayUntil(&xLastWakeTime, xSolenoidFrequency);
     }
 }
 
@@ -113,9 +114,9 @@ void calc_solenoid(float penZ)
 	// update the PWM value
 	// ledcWrite appears to have issues with interrupts, so make this a critical section
 	portMUX_TYPE myMutex = portMUX_INITIALIZER_UNLOCKED;
-	taskENTER_CRITICAL(&myMutex);
-			ledcWrite(SOLENOID_CHANNEL_NUM, solenoid_pen_pulse_len);		
-	taskEXIT_CRITICAL(&myMutex);	
+	portENTER_CRITICAL(&myMutex);
+		ledcWrite(SOLENOID_CHANNEL_NUM, solenoid_pen_pulse_len);		
+	portEXIT_CRITICAL(&myMutex);	
 }
 
 #endif
