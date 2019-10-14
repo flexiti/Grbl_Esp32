@@ -239,9 +239,17 @@ void limits_go_home(uint8_t cycle_mask)
         set_axis_position = 0;
       #else
         if ( bit_istrue(settings.homing_dir_mask,bit(idx)) ) {
-          set_axis_position = lround((settings.max_travel[idx]+settings.homing_pulloff)*settings.steps_per_mm[idx]);
+          #ifdef HOMING_FORCE_POSITIVE_SPACE
+            set_axis_position = 0; //lround(settings.homing_pulloff*settings.steps_per_mm[idx]);
+          #else
+            set_axis_position = lround((settings.max_travel[idx]+settings.homing_pulloff)*settings.steps_per_mm[idx]);
+          #endif
         } else {
-          set_axis_position = lround(-settings.homing_pulloff*settings.steps_per_mm[idx]);
+          #ifdef HOMING_FORCE_POSITIVE_SPACE
+            set_axis_position = lround((-settings.max_travel[idx]-settings.homing_pulloff)*settings.steps_per_mm[idx]);
+          #else
+            set_axis_position = lround(-settings.homing_pulloff*settings.steps_per_mm[idx]);
+          #endif
         }
       #endif
 
@@ -280,6 +288,15 @@ void limits_init()
 		#ifdef Z_LIMIT_PIN
 			pinMode(Z_LIMIT_PIN, INPUT_PULLUP);
 		#endif
+		#ifdef A_LIMIT_PIN
+			pinMode(A_LIMIT_PIN, INPUT_PULLUP);
+		#endif
+		#ifdef B_LIMIT_PIN
+			pinMode(B_LIMIT_PIN, INPUT_PULLUP);
+		#endif
+		#ifdef C_LIMIT_PIN
+			pinMode(C_LIMIT_PIN, INPUT_PULLUP);
+		#endif
 	#else
 		#ifdef X_LIMIT_PIN
 			pinMode(X_LIMIT_PIN, INPUT); // input no pullup
@@ -289,6 +306,15 @@ void limits_init()
 		#endif
 		#ifdef Z_LIMIT_PIN
 			pinMode(Z_LIMIT_PIN, INPUT);	
+		#endif
+		#ifdef A_LIMIT_PIN
+			pinMode(A_LIMIT_PIN, INPUT); // input no pullup
+		#endif
+		#ifdef B_LIMIT_PIN
+			pinMode(B_LIMIT_PIN, INPUT);
+		#endif
+		#ifdef C_LIMIT_PIN
+			pinMode(C_LIMIT_PIN, INPUT);	
 		#endif
   #endif
    
@@ -302,6 +328,15 @@ void limits_init()
 		#endif
 		#ifdef Z_LIMIT_PIN
 			attachInterrupt(digitalPinToInterrupt(Z_LIMIT_PIN), isr_limit_switches, CHANGE);
+		#endif
+		#ifdef A_LIMIT_PIN
+			attachInterrupt(digitalPinToInterrupt(A_LIMIT_PIN), isr_limit_switches, CHANGE);
+		#endif
+		#ifdef B_LIMIT_PIN
+			attachInterrupt(digitalPinToInterrupt(B_LIMIT_PIN), isr_limit_switches, CHANGE);
+		#endif
+		#ifdef C_LIMIT_PIN
+			attachInterrupt(digitalPinToInterrupt(C_LIMIT_PIN), isr_limit_switches, CHANGE);
 		#endif
   } else {
     limits_disable();
@@ -327,6 +362,9 @@ void limits_disable()
   detachInterrupt(X_LIMIT_BIT);
   detachInterrupt(Y_LIMIT_BIT);
   detachInterrupt(Z_LIMIT_BIT);  
+  detachInterrupt(A_LIMIT_BIT);
+  detachInterrupt(B_LIMIT_BIT);
+  detachInterrupt(C_LIMIT_BIT);  
 }
 
 
@@ -349,6 +387,20 @@ uint8_t limits_get_state()
 	#ifdef Z_LIMIT_PIN
 		pin += (digitalRead(Z_LIMIT_PIN) << Z_AXIS);
 	#endif
+	
+	#ifdef A_LIMIT_PIN
+		pin += (digitalRead(A_LIMIT_PIN) << A_AXIS);
+	#endif
+	
+	#ifdef B_LIMIT_PIN
+		pin += (digitalRead(B_LIMIT_PIN) << B_AXIS);
+	#endif
+	
+	#ifdef C_LIMIT_PIN
+		pin += (digitalRead(C_LIMIT_PIN) << C_AXIS);
+	#endif
+	
+	//grbl_sendf(CLIENT_SERIAL, "[MSG: Limit pins %d]\r\n", pin);
 
 	#ifdef INVERT_LIMIT_PIN_MASK // not normally used..unless you have both normal and inverted switches
 		pin ^= INVERT_LIMIT_PIN_MASK;
@@ -357,13 +409,19 @@ uint8_t limits_get_state()
 	if (bit_istrue(settings.flags,BITFLAG_INVERT_LIMIT_PINS)) { 
 		pin ^= LIMIT_MASK;
 	}
+	
+	//grbl_sendf(CLIENT_SERIAL, "[MSG: Limit Inverted %d]\r\n", pin);
   
 	if (pin) {
 		uint8_t idx;
 		for (idx=0; idx<N_AXIS; idx++) {
-			if (pin & get_limit_pin_mask(idx)) { limit_state |= (1 << idx); }
+			if (pin & get_limit_pin_mask(idx)) {
+				limit_state |= (1 << idx);
+			}
 		}
 	}
+	
+	//grbl_sendf(CLIENT_SERIAL, "[MSG: Limit State %d]\r\n", limit_state);
 	
 	return(limit_state);	
 }

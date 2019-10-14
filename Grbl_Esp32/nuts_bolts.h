@@ -21,17 +21,23 @@
 #ifndef nuts_bolts_h
 #define nuts_bolts_h
 
+#include "config.h"
+
 #define false 0
 #define true 1
 
 #define SOME_LARGE_VALUE 1.0E+38
 
 // Axis array index values. Must start with 0 and be continuous.
-#define N_AXIS 3 // Number of axes
+// Note: You set the number of axes used by changing N_AXIS.
+// Be sure to define pins or servos in cpu_map.h 
 #define X_AXIS 0 // Axis indexing value.
 #define Y_AXIS 1
 #define Z_AXIS 2
-// #define A_AXIS 3
+#define A_AXIS 3
+#define B_AXIS 4
+#define C_AXIS 5
+
 
 // CoreXY motor assignments. DO NOT ALTER.
 // NOTE: If the A and B motor axis bindings are changed, this effects the CoreXY equations.
@@ -84,5 +90,10 @@ float limit_value_by_axis_maximum(float *max_value, float *unit_vec);
 float mapConstrain(float x, float in_min, float in_max, float out_min, float out_max);
 float map_float(float x, float in_min, float in_max, float out_min, float out_max);
 float constrain_float(float in, float min, float max);
+
+template <class T> void swap ( T& a, T& b )
+{
+  T c(a); a=b; b=c;
+}
 
 #endif

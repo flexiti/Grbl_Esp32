@@ -37,16 +37,17 @@ Some features should not be changed. See notes below.
 
 #ifndef config_h
 #define config_h
-#include "grbl.h" // For Arduino IDE compatibility.
+#include <Arduino.h>
 
 //#define ESP_DEBUG
+#define N_AXIS 3 // Number of axes defined (valid range: 3 to 6) 
 
 // Define CPU pin map and default settings.
 // NOTE: OEMs can avoid the need to maintain/update the defaults.h and cpu_map.h files and use only
 // one configuration file by placing their specific defaults and pin map at the bottom of this file.
 // If doing so, simply comment out these two defines and see instructions below.
 #define DEFAULTS_GENERIC
-#define CPU_MAP_ESP32 // these are defined in cpu_map.h
+#define CPU_MAP_TEST_DRIVE // these are defined in cpu_map.h
 #define VERBOSE_HELP // adds addition help info, but could confuse some senders
 
 
@@ -166,20 +167,15 @@ Some features should not be changed. See notes below.
 // may be reduced to one pin, if all axes are homed with separate cycles, or vice versa, all three axes
 // on separate pin, but homed in one cycle. Also, it should be noted that the function of hard limits
 // will not be affected by pin sharing.
-// NOTE: Defaults are set for a traditional 3-axis CNC machine. Z-axis first to clear, followed by X & Y.
-//#define HOMING_CYCLE_0 (1<<Z_AXIS)                // REQUIRED: First move Z to clear workspace.
-//#define HOMING_CYCLE_1 ((1<<X_AXIS)|(1<<Y_AXIS))  // OPTIONAL: Then move X,Y at the same time.
-// #define HOMING_CYCLE_2                         // OPTIONAL: Uncomment and add axes mask to enable
 
-#define HOMING_CYCLE_0 (1<<Z_AXIS)                // REQUIRED: First move Z to clear workspace.
+// NOTE: Defaults are set for a traditional 3-axis CNC machine. Z-axis first to clear, followed by X & Y.  
+#define HOMING_CYCLE_0 (1<<Z_AXIS)	// TYPICALLY REQUIRED: First move Z to clear workspace.
 #define HOMING_CYCLE_1 (1<<X_AXIS)  
 #define HOMING_CYCLE_2 (1<<Y_AXIS)
 
-// NOTE: The following are two examples to setup homing for 2-axis machines.
-// #define HOMING_CYCLE_0 ((1<<X_AXIS)|(1<<Y_AXIS))  // NOT COMPATIBLE WITH COREXY: Homes both X-Y in one cycle. 
-
-// #define HOMING_CYCLE_0 (1<<X_AXIS)  // COREXY COMPATIBLE: First home X
-// #define HOMING_CYCLE_1 (1<<Y_AXIS)  // COREXY COMPATIBLE: Then home Y
+// NOTE: The following is for for homingg X and Y at the same time
+// #define HOMING_CYCLE_0 (1<<Z_AXIS) // first home z by itself
+// #define HOMING_CYCLE_1 ((1<<X_AXIS)|(1<<Y_AXIS))  // Homes both X-Y in one cycle. NOT COMPATIBLE WITH COREXY!!!
 
 // Number of homing cycles performed after when the machine initially jogs to limit switches.
 // This help in preventing overshoot and should improve repeatability. This value should be one or
@@ -196,6 +192,12 @@ Some features should not be changed. See notes below.
 // for professional CNC machines, regardless of where the limit switches are located. Uncomment this
 // define to force Grbl to always set the machine origin at the homed location despite switch orientation.
 // #define HOMING_FORCE_SET_ORIGIN // Uncomment to enable.
+
+// Uncomment this define to force Grbl to always set the machine origin at minimum travel positions of
+// the axes. Note: The $23 setting determines the direction of travel during homing. If an axes homes towards the 
+// minimum, it will set the machine position to 0. If it homes towards the maximum it will set the 
+// machine position to the max travel ($13x), minus the switch pull off ($27).
+// #define HOMING_FORCE_POSITIVE_SPACE // Uncomment to enable.
 
 // Number of blocks Grbl executes upon startup. These blocks are stored in EEPROM, where the size
 // and addresses are defined in settings.h. With the current settings, up to 2 startup blocks may
@@ -282,6 +284,8 @@ Some features should not be changed. See notes below.
 // problems if not externally pulled up. Ignoring will always return not activated when read.
 #define IGNORE_CONTROL_PINS
 
+//#define ENABLE_CONTROL_SW_DEBOUNCE // Default disabled. Uncomment to enable.
+#define CONTROL_SW_DEBOUNCE_PERIOD 32 // in milliseconds default 32 microseconds 
 
 
 // Inverts select limit pin states based on the following mask. This effects all limit pin functions,
@@ -691,6 +695,7 @@ Some features should not be changed. See notes below.
 // the 'fit_nonlinear_spindle.py' script solution. Used only when ENABLE_PIECEWISE_LINEAR_SPINDLE
 // is enabled. Make sure the constant values are exactly the same as the script solution.
 // NOTE: When N_PIECES < 4, unused RPM_LINE and RPM_POINT defines are not required and omitted.
+/*
 #define N_PIECES 4  // Integer (1-4). Number of piecewise lines used in script solution.
 #define RPM_MAX  11686.4  // Max RPM of model. $30 > RPM_MAX will be limited to RPM_MAX.
 #define RPM_MIN  202.5    // Min RPM of model. $31 < RPM_MIN will be limited to RPM_MIN.
@@ -705,6 +710,19 @@ Some features should not be changed. See notes below.
 #define RPM_LINE_B3  4.881851e+02
 #define RPM_LINE_A4  1.203413e-01  // Used N_PIECES = 4. A and B constants of line 4.
 #define RPM_LINE_B4  1.151360e+03
+*/
+
+#define N_PIECES 3
+#define RPM_MAX 23935.2
+#define RPM_MIN 2412.2
+#define RPM_POINT12 6283.9
+#define RPM_POINT23 11866.0
+#define RPM_LINE_A1 4.390865e-03
+#define RPM_LINE_B1 7.591787e+00
+#define RPM_LINE_A2 1.074874e-02
+#define RPM_LINE_B2 4.754411e+01
+#define RPM_LINE_A3 9.528342e-03
+#define RPM_LINE_B3 3.306286e+01
 
 
 /* ---------------------------------------------------------------------------------------
