@@ -20,7 +20,9 @@
 
 #include "grbl.h"
 
+#ifdef SPINDLE_PWM_PIN
 static float pwm_gradient; // Precalulated value to speed up rpm to PWM conversions.
+#endif
 
 void spindle_init()
 {
@@ -106,16 +108,10 @@ void spindle_set_speed(uint32_t pwm_value)
 		#ifndef INVERT_SPINDLE_PWM
 			grbl_analogWrite(SPINDLE_PWM_CHANNEL, pwm_value);			
 		#else
-			if (pwm_value == 0) {
-				grbl_analogWrite(SPINDLE_PWM_CHANNEL, (1<<SPINDLE_PWM_BIT_PRECISION));
-			}
-			else {
-				grbl_analogWrite(SPINDLE_PWM_CHANNEL, (1<<SPINDLE_PWM_BIT_PRECISION) - pwm_value - 1);
-			}			
+			grbl_analogWrite(SPINDLE_PWM_CHANNEL, (1<<SPINDLE_PWM_BIT_PRECISION) - pwm_value);
 		#endif
 		
 	#endif
-
 	
 }
 

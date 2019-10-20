@@ -85,7 +85,7 @@
 		#define X_DIRECTION_PIN  	GPIO_NUM_14
 		#define Y_STEP_PIN      	GPIO_NUM_26
 		#define Y_DIRECTION_PIN   	GPIO_NUM_15
-		#define COOLANT_FLOOD_PIN 	GPIO_NUM_25
+		//#define COOLANT_FLOOD_PIN 	GPIO_NUM_25
 		#define SPINDLE_PWM_PIN    	GPIO_NUM_2
 		#define X_LIMIT_PIN      	GPIO_NUM_17
 		#define Z_LIMIT_PIN     	GPIO_NUM_16		
@@ -94,7 +94,7 @@
 		#define X_DIRECTION_PIN  	GPIO_NUM_26
 		#define Y_STEP_PIN      	GPIO_NUM_14
 		#define Y_DIRECTION_PIN   	GPIO_NUM_25
-		#define COOLANT_FLOOD_PIN 	GPIO_NUM_16
+		//#define COOLANT_FLOOD_PIN 	GPIO_NUM_16
 		#define SPINDLE_PWM_PIN    	GPIO_NUM_17
 		#define X_LIMIT_PIN      	GPIO_NUM_2
 		#define Z_LIMIT_PIN     	GPIO_NUM_15 
@@ -114,8 +114,9 @@
 	// OK to comment out to use pin for other features
 	#define STEPPERS_DISABLE_PIN GPIO_NUM_13		
 		
-	#define COOLANT_MIST_PIN   	GPIO_NUM_21
-		
+	//#define COOLANT_MIST_PIN   	GPIO_NUM_21
+	#define USER_DIGITAL_PIN_1	GPIO_NUM_21
+	#define USER_DIGITAL_PIN_2	GPIO_NUM_25
 	
 	
 	#define SPINDLE_PWM_CHANNEL 0
@@ -468,7 +469,13 @@
 		#endif
 		
 		// redefine some stuff from config.h
+		#ifdef HOMING_CYCLE_0
+			#undef HOMING_CYCLE_0
+		#endif
 		#define HOMING_CYCLE_0 (1<<Y_AXIS)
+		#ifdef HOMING_CYCLE_1
+			#undef HOMING_CYCLE_1
+		#endif
 		#define HOMING_CYCLE_1 (1<<X_AXIS)
 		#ifdef HOMING_CYCLE_2
 			#undef HOMING_CYCLE_2
@@ -605,6 +612,9 @@
 	//#define SERVO_PEN_PIN 					GPIO_NUM_16
 	
 	// redefine some stuff from config.h
+	#ifdef HOMING_CYCLE_0
+		#undef HOMING_CYCLE_0
+	#endif
 	#define HOMING_CYCLE_0 (1<<X_AXIS) // this 'bot only homes the X axis
 	#ifdef HOMING_CYCLE_1
 		#undef HOMING_CYCLE_1
