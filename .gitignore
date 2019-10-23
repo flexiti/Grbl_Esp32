@@ -4,3 +4,7 @@ Thumbs.db
 *.orig
 embedded/node_modules
 embedded/dist
+.pio/build/nodemcu-32s/longcmd-a4b3962f000c5409619baa1066aeab43
+.pio/build/nodemcu-32s/longcmd-dddc94a9ffbcabb6189a47731e5a187f
+.pio/build/nodemcu-32s/longcmd-f0d1745cc729925ed6101659bcc8ee77
+.pio/build/.sconsign3.dblite
