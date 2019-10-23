@@ -39,7 +39,7 @@ Some features should not be changed. See notes below.
 #define config_h
 #include <Arduino.h>
 
-//#define ESP_DEBUG
+#define ESP_DEBUG
 #define N_AXIS 3 // Number of axes defined (valid range: 3 to 6) 
 
 // Define CPU pin map and default settings.
@@ -47,7 +47,8 @@ Some features should not be changed. See notes below.
 // one configuration file by placing their specific defaults and pin map at the bottom of this file.
 // If doing so, simply comment out these two defines and see instructions below.
 #define DEFAULTS_GENERIC
-#define CPU_MAP_TEST_DRIVE // these are defined in cpu_map.h
+//#define CPU_MAP_TEST_DRIVE // these are defined in cpu_map.h
+#define CPU_MAP_ESP32
 #define VERBOSE_HELP // adds addition help info, but could confuse some senders
 
 
@@ -97,7 +98,7 @@ Some features should not be changed. See notes below.
 
  //Default mode
 #ifdef ENABLE_WIFI
-#define DEFAULT_RADIO_MODE ESP_WIFI_AP
+#define DEFAULT_RADIO_MODE ESP_WIFI_STA   //ESP_WIFI_AP
 #else
     #undef ENABLE_NOTIFICATIONS
     #ifdef ENABLE_BLUETOOTH
